@@ -22,3 +22,22 @@ ps aux | grep shutdown-host  <br />
 
 !!if we do not want to wait it until boot we can use this command !!  <br />
 systemctl start shutdown-host.service <br />
+
+
+
+
+#if success running can be check to log here the log example <br />
+!!! <br />
+#:/var/log/log_auto_shutdown# cat auto_shutdown.sh202112070736.log <br />
+====================================================== <br />
+
+Running Script /opt/auto_shutdown/auto_shutdown.sh <br />
+Date: 202112070736 <br />
+Host: ip-172-31-0-31 <br />
+
+====================================================== <br />
+Shutdown scheduled for Tue 2021-12-07 15:36:36 UTC, use 'shutdown -c' to cancel. <br />
+
+!! or can be check 
+ps -ef | grep shutdown
+
