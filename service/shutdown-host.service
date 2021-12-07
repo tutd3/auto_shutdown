@@ -1,0 +1,9 @@
+[Unit]
+Description=making service inotif up
+After=network.target 
+
+[Service]
+ExecStart = /opt/opt/auto_shutdown/auto_shutdown.sh
+
+[Install]
+WantedBy=multi-user.target
