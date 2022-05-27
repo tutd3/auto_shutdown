@@ -1,0 +1,138 @@
+#!/bin/bash
+#######################################################################################
+# auto-load-address.sh
+# This script can be used to fetch user and location files from UFF AWS S3 Bucket
+# Reference : https://dgit.atlassian.net/wiki/spaces/~tsuputrawan/pages/2548794258/Uff+import+address+script+with+the+s3+bucket
+#######################################################################################
+
+# Set Datestamp
+dateTimeStamp=`date +%Y%m%d%H%M`
+# Get Script Location
+pushd `dirname $0` > /dev/null
+scriptPath=`pwd -P`
+popd > /dev/null
+scriptName=`basename "$0"`
+# Set Logging
+logDir="/opt/telflow/log/tfadmin"
+mkdir -p $logDir
+logFile="$scriptName$dateTimeStamp.log"
+touch $logDir/$logFile
+
+
+# Redirect the output to the logfile
+exec > $logDir/$logFile 2>&1
+
+echo "======================================================"
+echo ""
+echo "Running Script $scriptPath/$scriptName"
+echo "Date: $dateTimeStamp"
+echo "Host: `hostname`"
+echo ""
+echo "======================================================"
+
+#Set the variables
+bucketname=dgit-uff-address-bucket-prod
+locationfilenamepattern=csv
+locationimportdirectory=/opt/telflow/address-import-uff
+hostIP=http://172.18.211.196
+
+#Set the variables
+echo "Fetch the name of latest Location and user files from AWS S3 Bucket"
+locationfile=$(aws s3 ls s3://$bucketname --recursive | grep "$locationfilenamepattern" | sort | tail -n 1 | awk '{print $4}')
+echo "Location file = " $locationfile
+
+#Script Execution for Location file###
+echo "Copy the Location file into local server"
+#aws s3 cp --recursive s3://$bucketname $locationimportdirectory
+for j in $(aws s3 ls s3://dgit-uff-address-bucket-prod |  awk {'print "aws s3 ls s3://dgit-uff-address-bucket-prod/" $3'} |  bash | grep "csv" | awk '{print $4}')
+do
+    aws s3 cp s3://dgit-uff-address-bucket-prod/$j $locationimportdirectory
+done
+
+#Script Execution for address import###
+echo "======================================================"
+echo "import address"
+echo "======================================================"
+#begin looping for list file inside dir
+for f in $(ls /opt/telflow/address-import-uff/ | xargs -n 1 basename)
+do
+  # take action on each file. $f store current file name to check
+  #echo "$f"
+  a=12
+  result=$(cat /opt/telflow/address-import-uff/$f | awk -F "," '{print NF-1}')
+    
+if [[ "$(echo $result | grep "$a")" == *13* || "$(echo $result | grep "$a")" == *14* || "$(echo $result | grep "$a")" == *15* || "$(echo $result | grep "$a")" == *16* ]]
+then
+   echo "no valid : $f removed"
+   aws s3 mv s3://dgit-uff-address-bucket-prod/$f s3://dgit-uff-address-bucket-prod/DirListFileNotSuccessImported/
+   rm -rf /opt/telflow/address-import-uff/$f
+elif [[ "$(echo $result | grep "$a")" == *"3"* || "$(echo $result | grep "$a")" == *"4"* ]]
+then
+   echo "no valid $f removed"
+   aws s3 mv s3://dgit-uff-address-bucket-prod/$f s3://dgit-uff-address-bucket-prod/DirListFileNotSuccessImported/
+   rm -rf /opt/telflow/address-import-uff/$f
+elif [[ "$(echo $result | grep "$a")" == *"5"* || "$(echo $result | grep "$a")" == *"6"* || "$(echo $result | grep "$a")" == *"7"* || "$(echo $result | grep "$a")" == *"8"* ]]
+then
+   echo "no valid $f removed"
+   aws s3 mv s3://dgit-uff-address-bucket-prod/$f s3://dgit-uff-address-bucket-prod/DirListFileNotSuccessImported/
+   rm -rf /opt/telflow/address-import-uff/$f
+elif [[ "$(echo $result | grep "$a")" == *"9"* || "$(echo $result | grep "$a")" == *"10"* || "$(echo $result | grep "$a")" == *"11"* ]]
+then
+   echo "no valid $f removed"
+   aws s3 mv s3://dgit-uff-address-bucket-prod/$f s3://dgit-uff-address-bucket-prod/DirListFileNotSuccessImported/
+   rm -rf /opt/telflow/address-import-uff/$f
+else
+   echo "valid : $f"
+   aws s3 cp s3://dgit-uff-address-bucket-prod/$f s3://dgit-uff-address-bucket-prod/DirListFileSuccessImported/
+   docker run -e CONSUL_SERVER=$hostIP:8500 -v $locationimportdirectory:/opt/telflow/uff-address-importer/imports/ registry.cloud.telflow.com/dgit_private/telflow-uff-address-importer:latest "$f"
+fi
+done
+
+#looping checking file name .csv
+echo "======================================================"
+echo "checking if there is any error from log file"
+echo "======================================================"
+for k in $(aws s3 ls s3://dgit-uff-address-bucket-prod |  awk {'print "aws s3 ls s3://dgit-uff-address-bucket-prod/" $3'} |  bash | grep "csv" | awk '{print $4}')
+do
+#grep error
+grep 'INFO' /opt/telflow/log/tfadmin/$logFile | tail -n 1| cut -d , -f 1 | awk '{print $2}' >> /opt/telflow/log/tfadmin/info.log
+a=INFO
+b=$(cat /opt/telflow/log/tfadmin/info.log)
+if echo $b|grep "$a"
+then
+   echo "No error found will remove file"
+#Script remove for Location file###
+   echo "remove import file inside host"
+   rm -rf $locationimportdirectory/*.csv
+#Script remove file from s3 bucket###
+   echo "remove import file address inside s3"
+   aws s3 rm s3://dgit-uff-address-bucket-prod/$k
+else
+   echo "error found file will keep file, move to other dir"
+   aws s3 mv s3://dgit-uff-address-bucket-prod/$k s3://dgit-uff-address-bucket-prod/DirListFileNotSuccessImported/
+fi
+done
+
+#script for remove file log pass 7 days##
+echo "======================================================"
+echo "remove file log pass 7 days"
+echo "======================================================"
+find /opt/telflow/log/tfadmin -type f -mtime +7 -name '*.log' -delete
+
+#Script remove for info report file###
+echo "======================================================"
+echo "remove info report file inside host"
+echo "======================================================"
+rm -rf $logDir/info.log
+
+#script remove exited container
+echo "======================================================"
+echo "remove exited container"
+echo "======================================================"
+docker rm $(docker ps -a -f status=exited -q)
+
+echo "======================================================"
+echo "Script $scriptPath/$scriptName has ended"
+echo "======================================================"
+ 
+############################################################
