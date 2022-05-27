@@ -1,0 +1,776 @@
+>>>>>>>>grep 
+To search files that has specific string (below will list files with string ORD000000001 inside) :  
+# grep -rlw --include=fuse.log* -e "ORD000000001" /opt/telflow/log/fabric/ 
+
+>>>>>>>To search files that has specific string within timeline: 
+# grep -rlw --include=fuse.log* -e "ORD000000001" /opt/telflow/log/fabric/ | grep '2019-06-17 07:1[0-9]"[00-60]' 
+
+>>>>>To search files that has specific string and put the result to a file: 
+# grep -rlw --include=fuse.log* -e "ORD000000001" /opt/telflow/log/fabric/ | grep '2019-06-17 07:1[0-9]"[00-60]' > fuse_output.txt 
+
+>>>>To search word in a file 
+# grep 'word' filename 
+# grep 'ORD000000001' /opt/telflow/log/fabric/fuse.log 
+
+>>>>To search word in a file and send output to another file  
+# grep 'word' filename > destination(don't forget to add /filename at the end) 
+# grep 'ORD000000001' /opt/telflow/log/fabric/fuse.log > home/dgit/tfs-9999-fuse-log-2019-09-03.log   
+
+>>>>To search word in many files  
+# grep 'word' file1 file2 
+
+>>>>To search word in all files in 1 folder  
+# grep –r 'word' folder  
+# grep -r 'ORD000000001' /opt/telflow/log/fabric/ 
+
+>>>>To search word in all files in 1 folder with 2 keywords (AND condition) 
+# grep -ri 'ORD000000001' /opt/telflow/log/fabric/ | grep -i 'ERROR' (not case sensitive) 
+
+>>>>General keywords to search in log files 
+error , err, warn, debug, exception, order-id  
+tail 
+
+
+>>>> untuk deploy ulang
+systemctl stop docker
+rm -rf /var/lib/docker/containers/*
+rm -rf /opt/telflow/docker-compose/*
+systemctl start docker
+Deploy all
+
+>>>>To monitor a file in realtime :grep  
+$ tail –f <filename> 
+Example:  
+# tail –f /opt/telflow/log/fabric/fuse.log 
+
+>>>>Log locations : 
+Fuse/Fabric 
+/opt/telflow/log/fabric/fuse.log 
+Process/Karaf 
+/opt/telflow/log/process/karaf.log 
+Portal  
+/opt/telflow/log/portal/telflow-portal-core.log 
+Elastic Search 
+/var/log/elasticsearch 
+Rest API Log 
+/opt/telflow/log/rest-api/server.log 
+Artefact Log 
+/opt/telflow/log/artefact/artefact.log 
+Wrapper Log 
+/opt/telflow/log/process/wrapper.log 
+
+>>>>ssh 
+Standard ssh command: 
+$ ssh <username>@<target-host> 
+
+>>>ssh command to connect with a pem file: 
+$ ssh -i <location-to-pem-file> <username>@<target-host> 
+Example: 
+$ ssh -i /home/danz/remote/key/iabg.pem dgit@192.168.2.1 
+
+>>>From jump host: 
+$ssh -i .ssh/iabg.pem dgit@192.168.164.151 
+scp 
+
+>>>>copying file from remote machine to local via ssh 
+# scp <remote-host-username>@<remote-host-address>:<source-file> <destination> 
+Example : 
+# scp ec2-user@172.16.1.109:/var/lib/mongo/notify.ns /home/danz/Documents/backup 
+
+>>>>Copying/sending file from local machine to remote machie via SSH 
+# scp <source file> username@<remote-host-address>:<destination> 
+Example : 
+# scp /home/rdante/curlfunction-1.0.0-SNAPSHOT.jar rdante@172.16.146.135:/home/reds/Downloads 
+
+>>>>If  a key needed, add -i following with the key file 
+Example : 
+# scp -i ec2.pem ec2-user@172.16.1.109:/var/lib/mongo/notify.ns /home/danz/Documents/backup 
+# scp -i ec2.pem /home/rdante/curlfunction-1.0.0-SNAPSHOT.jar rdante@172.16.146.135:/home/reds/Downloads 
+
+>>>>Service names 
+Mongodb: mongod 
+Portal: httpd 
+Rest-api: telflow-rest-api 
+Fabric: telflow-fabric 
+Process: telflow-process 
+Elasticsearch: elasticsearch 
+LDAP: slapd 
+Enter Fabric console 
+telflow-fabric-client 
+
+>>>>List Telflow fabric services 
+# telflow-fabric-client 'list -l' | grep telflow 
+
+>>>>Restart service  
+# service telflow-fabric restart 
+
+>>>>Check service status 
+# service telflow-fabric status 
+
+>>>>Purging Fabric cache 
+sudo /opt/telflow/fabric/bin/client 'telflow:purge-fabric-cache' 
+
+>>>>Export Mongo Document as CSV :  
+# mongoexport -u telflow -ppassword2change --authenticationDatabase admin --db Telflow --collection Party --type=csv --fields _t,TelflowID,FirstName,LastName,AuthPartyID,Status --out /tmp/partyInfoData.csv --query "{}" 
+Notes : 
+-u : username for mongodb 
+-p : password for mongodb 
+--db : database name 
+--collection : collection name 
+--fields : fields to be exported 
+--out : location to put exported csv file 
+
+>>>>LDAP NOTE: Khusus vodafone untuk masuk ke environment hilangkan localhost ganti dengan ldap1, error bisa di cek di fabric kata kunci 
+ <ERROR Party - Error:Individual user creation failed.LDAP connection exception:No Such Object>
+List all user in LDAP :  
+# ldapsearch -h localhost -w Summer05 -D "cn=Manager,dc=telflow,dc=com" -b "dc=telflow,dc=com" -s sub "(objectclass=*)" 
+
+>>>>Check Specific user in LDAP (by user Telflow ID):  
+# ldapsearch -h localhost -w Summer05 -D "cn=Manager,dc=telflow,dc=com" -b "dc=telflow,dc=com" -s sub "(uid=danielpo)" 
+
+>>>>Filter user by name pattern (below will result all user with name start with dan, ie: daniel, danz, danar):  
+# ldapsearch -h localhost -w Summer05 -D "cn=Manager,dc=telflow,dc=com" -b "dc=telflow,dc=com" -s sub "(cn=dan*)" 
+
+>>>>Filter user based on organization (below example organization name = Snap):  
+# ldapsearch -h localhost -w Summer05 -D "cn=Manager,dc=telflow,dc=com" -b "dc=telflow,dc=com" -s sub "(o=Snap)" 
+
+>>>>SSH Tunneling 
+ssh -L 443:<destination-ip-address>:443 <ssh-username>@<jump-host-ip-address> 
+Example:  
+ssh -L 443:192.168.1.100:443 dgit@196.192.189.21 (this will open ssh tunneling for https (port 6220) ) 
+
+>>>>AWK 
+Awk command can be used to filter log based on specific time range. 
+Example: 
+awk '/2019-04-01 20:11:01,788/,/2019-04-01 20:11:02,039/' fuse.log 
+
+>>>>MySQL 
+Execute mysql query via terminal (this is very useful to create job from jenkins )
+mysql -vv -u root -pdbacc3ss -D activiti -e "DELETE FROM ACT_RU_TASK WHERE ID_ =25447" > logmysql 
+-v = To capture the result in verbose mode, put more v to catch more detailed result.  (maximum 3 v) 
+-u = username 
+-p = password 
+-D = database name 
+-e = query to execute 
+> logmysql = to save the execution log in a file (logmysql is a filename) 
+
+
+>>>>tar 
+Compressing a folder using tar command in linux terminal: 
+tar -zcvf filename.tar.gz target-folder 
+tar -zcvf .tar.gz
+
+>>>>uncompress tar file:  
+tar xvfz filename.tar.gz 
+       
+
+>>>>Find  
+to find all files/directory which has pattern danie* 
+find . -name "danie*" 
+
+>>>>>Check memory usage 
+#Top 
+
+>>>>Login to wholesale Postgre  
+psql -h pg-wholesaleportal-vodafone-co-nz-ap-southeast-2a.cac5uiq6up3r.ap-southeast-2.rds.amazonaws.com -U postgres 
+pass: dbacc3ss 
+
+
+>>>>NPM find
+find . -type f -iname '*spec' -print0 | xargs -0 grep -il npm | sort
+
+>>tail
+grep "OutOfMemory" isi | tail -1
+
+>>log link must Check
+https://confluence.office.dgitsystems.com/display/~dleonardo/All+About+Log
+
+>>>dump
+ps aux | grep dump
+
+#check service run uff etc
+ps aux | grep fabric
+sudo service telflow-fabric stop
+kill -9 <id>
+sudo service telflow-fabric start 
+
+>>rpm Check
+rpm -qa | grep telflow
+
+>> docker ceck version yang di gunakan
+docker inspect [container_id]
+
+>>kill prosess find name
+ps -A | grep <putname>
+
+>>sar peroses melihat catatan log cpu dan lainya (gives you info about all CPUs on the system, starting at midnight)
+sar -u (cpu usage) yang harus di perhatikan (%user, %system, %iowait, and %idle)
+sar -r (ram usage) yang harus di perhatikan (%memused and %commit) ( If %commit is consistently over 100%, this result could be an indicator that the system needs more RAM)
+sar -d (disk i/o) For disk I/O performance, I use. ( looking at %util and %await ) ( The await field contains the amount of time the I/O spends in the scheduler. Await is measured in milliseconds, and in my environment, I’ve seen that anything greater than 50ms starts to cause issues. That threshold may vary in your environment.)
+https://www.redhat.com/sysadmin/troubleshooting-slow-servers
+
+>>>monggo masalah texteditornya
+export LC_ALL=C
+
+>>>>download manual docker images
+docker-compose pull fabric / docker-compose -f /opt/telflow/docker-compose/telflow-application-services-compose.yml pull fabric
+
+>>>>cara start docker compose
+docker-compose up -d fabric
+
+>>>get feature fabric
+feature:list | grep -i telflow
+
+>>>akses fabric dari docker-compose
+docker-compose exec fabric sh
+
+>>>jika ada perubahan pada docker-compose yang menuju ke file yml yang lain maka edit
+vi .env
+
+>>>ngecek docker runing di docker-compose
+docker-compose ps
+
+>>>untuk mengecek network docker
+docker network list
+
+>>untuk mengecek iptabel aktif apa gk
+sudo service iptables status
+
+
+command backup database disini:
+>>>
+nohup /usr/local/bin/ldapbackup &   --> untuk backup ldap
+nohup /usr/local/bin/elasticsearchbackup &    --> untuk backup elastic
+nohup /usr/local/bin/automongobackup.sh & --> untuk backup mongo
+nohup /usr/local/bin/automysqlbackup & --> untuk backup mysql.
+nohup /usr/local/bin/pgbackup & --> untuk backup postgres.
+hasil backup ada di /var/backup/
+<<<
+
+cek epnggunan ram tertingi
+ps -o pid,user,%mem,command ax | sort -b -k3 -r
+
+
+command untuk menghapus monggo
+>>>
+sudo service mongod stop
+sudo yum erase $(rpm -qa | grep mongodb-org)
+sudo rm -r /var/log/mongodb
+sudo rm -r /var/lib/mongo
+<<<
+
+>>> ini command untuk cari nama file
+find / -name <isi nama file di sini>
+
+>>>ini untuk top record CPUs
+top -b -n 1 > top.txt
+
+command khusus DFA
+command check dlu
+/usr/local/bin/consul kv get telflow/app/portal/global/enableNewOrder 
+/usr/local/bin/consul kv get telflow/app/portal/global/enableChangeOrderMenu 
+/usr/local/bin/consul kv get telflow/app/portal/global/enableTerminateOrderMenu 
+command setelah di check kalau true ganti
+/usr/local/bin/consul kv put telflow/app/portal/global/enableNewOrder "false"
+/usr/local/bin/consul kv put telflow/app/portal/global/enableChangeOrderMenu "false"
+/usr/local/bin/consul kv put telflow/app/portal/global/enableTerminateOrderMenu "false"
+
+
+>>>melihat log live in fabric
+log:tail
+
+>> cara melihat telflow console version
+/usr/local/bin/consul version
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+###ini cara lain drop databaser di postgres
+REVOKE CONNECT ON DATABASE tf_interaction FROM public;
+REVOKE CONNECT ON DATABASE tf_party FROM public;
+REVOKE CONNECT ON DATABASE tf_catalog FROM public;
+
+kemudian matikan PID nya:
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = 'tf_interaction'
+AND pid <> pg_backend_pid();
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = 'tf_party'
+AND pid <> pg_backend_pid();
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = 'tf_catalog'
+AND pid <> pg_backend_pid();
+
+kemudian drop:
+drop database tf_interaction;
+drop database tf_party;
+drop database tf_catalog;
+
+/* Method 2: use ALTER DATABASE. Superusers still can connect!
+ALTER DATABASE tf_interaction CONNECTION LIMIT 0;
+Force disconnection of all clients connected to this database, using pg_terminate_backend.
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = 'tf_interaction';
+DROP DATABASE tf_interaction;
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+>>> cara menghapus container 10.8 envi
+1. remove container assets,fabric,reporting,pricing-engine,artefact,notify,process
+->  docker container rm <container id>
+2. docker image prune -af <<for image / docker rm $(docker ps -a -f status=exited -q) << for container
+3. Prepare inventori
+4. Redeploy using jenkx
+
+
+cara melakukan recreate container yang bermasalah
+cara micheal:
+docker-compose up -d --force-recreate
+cara Daniel:
+docker-compose stop artefact
+docker container rm <container-id>
+docker-compose up -d artefact
+docker-compose up -d -V --force-recreate idp
+
+
+Untuk DFA 
+psql -W -U postgres --dbname=dfa_customer_cache < /opt/telflow/database-scripts/mysql/dfa/Schemas/Mysql/dfa_customer_cache.sql
+
+
+Note!! cara menambahkan route di vpn
+masuk >https://vpn.office.dgitsystems.com/admin/
+VPN-seting 
+Routing > pada bagian Specify the private subnets to which all clients should be given access (one per line):
+
+
+>>>>>>>>>>>>di bawah sini tidak ada kaitan tentang command yang akan di gunakan<<<<<<<<<<<<<<<<<<
+
+>>> ini untuk seting password postgres agar bisa menggunakan password
+https://gist.github.com/AtulKsol/4470d377b448e56468baef85af7fd614
+
+>>>ini untuk unzip .7z file
+https://apple.stackexchange.com/questions/307377/how-can-i-unpack-7z-files-via-macos-terminal
+
+>>>Check slow queries on MySQL without slow query log
+https://confluence.office.dgitsystems.com/display/TKB/Check+slow+queries+on+MySQL+without+slow+query+log
+
+>>>>Database Backup And Restore
+https://confluence.office.dgitsystems.com/display/TKB/Database+Backup+And+Restore+-+Including+Postgres
+
+>>>>Donload entity bundel manual seandai saja di suruh downgrade dan upgrade manual
+https://confluence.office.dgitsystems.com/display/TKB/Deploy+Entity+Bundle
+
+Link untuk belajar
+https://confluence.office.dgitsystems.com/display/TFRD/AWS+Training
+
+Link untuk jadwal ops
+https://jira.office.dgitsystems.com/secure/RapidBoard.jspa?rapidView=198&view=detail&selectedIssue=IABG-574\
+
+
+
+DIBACA BARU SAMPAI sini
+https://confluence.office.dgitsystems.com/display/TKB/Enable+Customer+Access+to+Order+-+Process+Tab
+
+
+psql -U postgres
+
+cari
+https://bitbucket.office.dgitsystems.com/projects/OP/repos/telflow-playbooks/browse/roles/dgit-hub.mongodb?at=refs%2Fheads%2Frelease%2F10.1
+
+
+
+
+
+
+https://dgitsystems.1password.com/vaults/wdhzritdiex5msoczgj6gkcypm/allitems/662g2gyjlbjvod4fov7v2gyg7e
+my password
+A3-37Q45W-EEMNR3-LRW3J-XDNVC-X6QH2-BPBV7
+1passwordTutde
+
+ini untuk iabg dir local
+/app/customer/home/dgitrep/rpm/telflow/reference/10.1
+
+New account for DGIT admin
+dgitadmin
+0aTqVJKVyCWC4R64j3LD
+
+Hendra Cahyadi Account
+Hendra Cahyadi
+dgit
+
+
+
+
+ssl update:
+catalyst2019.demo.telflow.com
+catalyst2018.demo.telflow.com
+catalyst2017.demo.telflow.com
+linux01.10-4.demo.telflow.com
+api.demo.telflow.com
+linux01.catalyst2014.demo.telflow.com
+mobile-catalyst.demo.telflow.com
+sinefa.demo.telflow.com
+vfws.demo.telflow.com
+bod-10-8.demo.telflow.com
+bod.demo.telflow.com
+
+>>>> update crt 9.5 to fabric
+From wniu to Everyone: (2:14 PM)
+dirname $(dirname $(readlink -f $(which javac)))
+From Dipty to Everyone: (2:18 PM)
+/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.151.x86_64/jre/lib/security
+From wniu to Everyone: (2:28 PM)
+Import New CA into Trusted Certs, make sure paths and certificate name are correctkeytool -import -trustcacerts -alias telflow-vodafone-com-nz-crt -file /opt/telflow/fabric/data/log/cret-telflow.vodafone.com.nz.crt -keystore /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.151.x86_64/jre/lib/security/cacerts—Check a particular keystore entry using an alias:keytool -list -v -keystore keystore.jks -alias telflow-vodafone-com-nz-crt
+keytool -list -v -keystore /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.151.x86_64/jre/lib/security/cacerts -alias telflow-vodafone-com-nz-crt
+
+
+note this envi ssl wont acctive
+victrack.demo.telflow.com
+scp -i /Users/tsuputrawan/Documents/key/key.pem nginx.demo.telflow.com.cert ec2-user@52.63.212.44:/opt/telflow/idp/nginx/conf.d/ssl/cert
+
+https://www.middlewareinventory.com/blog/ansible-shell-examples/
+https://www.cyberciti.biz/faq/how-to-use-sed-to-find-and-replace-text-in-files-in-linux-unix-shell/
+
+akun zoiper
+registrar/sip host: inomial.voippabx.com.au
+account/extension: 9006
+password: B9wEM7H6oP
+
+
+link belajar command echo 
+https://www.oakton.edu/user/2/rjtaylor/cis218/Handouts/sed.txt
+
+
+username nya admin
+3:38
+password nya xYa-hmG$f!76U)^g
+3:38
+kalau sudah di copy kasih tahu ya
+
+
+Nmim7gOO6k1O3Mx1
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+free api pass
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+old: Nmim7gOO6k1O3Mx
+pass: 4d3d3von!ad3d3voN!
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+free kibana pass
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+pass: 4d3d3von!ad3d3voN
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+info free api
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+@tutde suputrawan and @Daniel Malessy I would like to hand over the freeipa user management to you guys.
+Here is a link on the basic user management in the telflow env https://dgit.atlassian.net/wiki/spaces/DPE/pages/988119753/FreeIPA+User+Management
+FreeIPA User Management in DGIT Product Engineering
+Last updated a minute ago by Rowan Matulis | Added by Confluence Cloud
+7:20
+This is also how to manually join a machine to freeipa - https://dgit.atlassian.net/wiki/spaces/DPE/pages/988119811/FreeIPA+Server+Join+Domain
+FreeIPA Server Join Domain in DGIT Product Engineering
+Last updated 6 months ago by Rowan Matulis | Added by Confluence Cloud
+7:20
+Ports that need to be open also - https://dgit.atlassian.net/wiki/spaces/DPE/pages/988119751/FreeIPA+Ports
+FreeIPA Ports in DGIT Product Engineering
+Published 7 months ago by Rowan Matulis | Added by Confluence Cloud
+7:21
+Here are a few known issues also - https://dgit.atlassian.net/wiki/spaces/DPE/pages/988119742/FreeIPA+Known+issues
+FreeIPA Known issues in DGIT Product Engineering
+Last updated 6 months ago by Rowan Matulis | Added by Confluence Cloud
+
+>>>>>>>>>>>>>>>>>>>>>>>>
+terkait security
+>>>>>>>>>>>>>>>>>>>>>>>>>
+untuk memindahkan hasil print ke txt
+./arachni_reporter test.com.afr > b.txt
+
+untuk membuat nama format dari hasil scan
+./arachni http://crm.isn-speed.com --report=test.com.afr
+
+untuk mempersingkat waktu arachni
+./arachni https://10-8.system.telflow.com --checks trainer --audit-links --audit-forms --audit-cookies --http-request-concurrency=1 --http-request-timeout=5000 --report=test1.com.afr
+
+./arachni https://10-8.system.telflow.com --audit-links --audit-forms --report=test1.com.afr
+
+
+--http-request-concurrency=10
+
+
+nikto
+ssh://git@bitbucket.office.dgitsystems.com:7999/op/telflow-inventories.git
+
+=> solution
+https://www.arachni-scanner.com/blog/massive-performance-optimizations-now-in-the-nightlies/
+./arachni http://testhtml5.vulnweb.com --checks - --http-request-concurrency=10 --audit-forms --report=test10_8.com.afr  
+
+rubah ke html
+./arachni_reporter test3.com.afr --reporter=html:outfile=my_report2.html.zip
+
+https://www.arachni-scanner.com/features/framework/
+https://resources.infosecinstitute.com/web-application-testing-with-arachni/#gref
+https://github.com/Arachni/arachni/wiki/Command-line-user-interface
+http://support.arachni-scanner.com/kb/general-use/logging-in-and-maintaining-a-valid-session
+http://support.arachni-scanner.com/discussions/problems/4087-using-login-plugins
+http://support.arachni-scanner.com/discussions/questions/9429-auto-login
+http://support.arachni-scanner.com/discussions/problems/5258-auto-login-script-html-issue
+https://github.com/Arachni/arachni/issues/824
+https://github.com/Arachni/arachni/issues/906
+https://www.iswatlab.eu/wp-content/uploads/2015/09/Arachni_ZAP.pdf
+
+
+
+Nikto
+https://books.google.co.id/books?id=RYwH0ZI1RKgC&pg=PA116&lpg=PA116&dq=nikto+did+not+show+correct+Description+for+html+format&source=bl&ots=TLF-k-7jb7&sig=ACfU3U35aS-Cd_WzkgZhWW0FOqAg2Eh1nA&hl=en&sa=X&ved=2ahUKEwiTktXop4rqAhXYYysKHRnsBzEQ6AEwAHoECAkQAQ#v=onepage&q=nikto%20did%20not%20show%20correct%20Description%20for%20html%20format&f=false
+https://github.com/adamtornhill/nikto
+https://tools.kali.org/information-gathering/nikto
+xample 
+http://ns1.niiar.ru/nikto-niiar.htm
+
+
+
+command untuk scaner pasif
+./nikto.pl -Display 1234EP -o report3.html -Format htm -Tuning 123bde -host
+mv report4.html /usr/share/nginx/sec/nikto/
+
+
+
+this how to sec di internal server
+https://letslearndevops.com/2017/07/24/how-to-secure-terraform-credentials/
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Perojek teraform
+akun test pass 4d3d3voN!
+akseskey
+AKIA2QRHZBCNZ47XOQME
+Secret access key 
+paa7Qevbrc4Q1d7v/BhVfwmadpPl+1xxkN4CuBu0
+
+
+ELB
+https://github.com/terraform-aws-modules/terraform-aws-elb
+
+
+baca
+https://www.terraform.io/docs/enterprise/before-installing/reference-architecture/aws.html
+
+
+baca
+https://www.linuxclustering.net/2016/03/21/step-by-step-how-to-configure-a-linux-failover-cluster-in-amazon-ec2-without-shared-storage-amazon-aws-sanless-cluster/
+
+baca
+https://www.linuxclustering.net/2016/03/21/step-by-step-how-to-configure-a-linux-failover-cluster-in-amazon-ec2-without-shared-storage-amazon-aws-sanless-cluster/
+
+
+ELB
+https://github.com/terraform-providers/terraform-provider-aws/blob/master/examples/elb/main.tf
+https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/elb
+rds
+https://github.com/gruntwork-io/terratest/blob/master/examples/terraform-aws-rds-example/main.tf
+
+sync cer ke ansible 2.10
+https://jenkins.office.dgitsystems.com/job/DevOps/view/Backup%20Jobs/job/Sync-Jenkins-Certificate/configure
+
+
+aws test dgit akun
+access : AKIAXQVF6BVVZ44YEQA2 
+sec : dhL753J4TLCUmlaw0FtQqCftgDgd7ZPPngPRb2k0
+
+
+https://jenkins.office.dgitsystems.com/job/DevOps/job/Terraform_Client_VPC_Create/220/console
+
+ping ansible
+ansible newhost -i hosts -m ping 
+
+
+>>>>>> masalah telflow-activemq solve etisalat
+rm telflow-activemq.service
+rm telflow-activemq
+cp /opt/telflow/telflow-activemq/bin/linux-x86-64/telflow-activemq.service telflow-activemq.service
+systemctl enable telflow-activemq
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+TIa5UNc812ka9SG8nPWF
+
+postgrest cara buat table
+CREATE DATABASE <db_name>;
+\c <db_name>
+CREATE TABLE accounts (
+	user_id serial PRIMARY KEY,
+	username VARCHAR ( 50 ) UNIQUE NOT NULL,
+	password VARCHAR ( 50 ) NOT NULL,
+	email VARCHAR ( 255 ) UNIQUE NOT NULL,
+	created_on TIMESTAMP NOT NULL,
+        last_login TIMESTAMP 
+);
+DROP DATABASE <db_name>;
+
+
+####>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+copy file docker dari container ke luar
+docker cp <cpntainer-id>:/opt/tellow/xxxx.json <file bebas>
+copy file docker dari luar ke dalam container 
+docker cp appsettings.local.json <container-id-telflow-party>:/opt/telflow/party/appsettings.local.json
+
+
+
+###>>>> how to drop db monggo
+use <db>
+db.dropDatabase() 
+{ "dropped" : "jobs", "ok" : 1 } 
+
+
+
+Meeeting
+
+
+
+<<Mongo search>>
+db.message.find().pretty();
+
+
+
+>>>>>>vocus>>>
+create a tunneling between the jump host and the db host > ssh -L 9912:localhost:5432 -N -i /home/vocus-user/.ssh/id_rsa vocus-user@10.201.110.253
+create a tunneling between the local to the jump host > ssh -L 9913:localhost:9912 -N -i vocus_non_prod.pem vocus-user@13.238.88.126 
+use our localhost access to remote to the server psql -h localhost -p 9913 postgres
+
+buat tunneling antara jump host dan host db > ssh -L 9912:localhost:5432 -N -i /home/vocus-user/.ssh/id_rsa vocus-user@10.201.117.160
+buat tunneling antara local ke jump host > ssh -L 9913:localhost:9912 -N -i vocus_non_prod.pem vocus-user@13.238.88.126 
+gunakan akses lokal host kita untuk melakukan remote ke server terkait psql -h localhost -p 9913 postgres
+
+
+tiket
+
+https://jira.office.dgitsystems.com/browse/UFFS-811
+
+
+
+
+>>>>>>>>>>> visudo untuk melakukan setup user permission
+ulr: https://phoenixnap.com/kb/how-to-create-add-sudo-user-centos
+#Trainee Commands
+Cmnd_Alias TRAINEE_CMD_LIST = /usr/local/bin/docker-compose *, /bin/docker ps, /bin/docker login registry.cloud.telflow.com/dgit_training,  /bin/docker exec *, /bin/docker stop *, /bin/docker start *, /bin/docker logs *, /bin/vi /opt/telflow/docker-compose/*.yml, /bin/psql *, /usr/bin/consul kv get *, /usr/bin/consul kv put *, /bin/docker pull *, /bin/docker container *, /bin/docker *, /bin/vi *.yml
+
+
+#Allow trainees to run sudo commands
+%trainee  ALL=(root) NOPASSWD: TRAINEE_CMD_LIST
+
+
+
+>>>>check ssl 
+cat <name.cert> | openssl x509 -noout -enddate
+
+>>>list service
+chkconfig --list
+
+
+
+docker run --net=host --rm -ti -v /home/tsuputrawan/es/json:/tmp registry.cloud.telflow.com/dgit_private/elasticsearch-dump --input=http://localhost:9200/telflow-entity-address --output=/tmp/address.json --type=data  --limit=1000
+docker run --net=host --rm -ti -v /home/tsuputrawan/es/json:/tmp registry.cloud.telflow.com/dgit_private/elasticsearch-dump --input=http://localhost:9200/telflow-entity-task --output=/tmp/task.json --type=data  --limit=1000
+
+
+###
+connect ke influx db:
+> [root@ip-10-10-163-86 fibercox-admin]# influx -precision rfc3339
+Connected to http://localhost:8086 version 1.8.4
+InfluxDB shell version: 1.8.4
+> show databases
+name: databases
+name
+----
+_internal
+telegraf
+> ALTER RETENTION POLICY "autogen" ON "telegraf" DURATION 30d
+>
+
+
+#>>>> cek boot system OS linux centos
+journalctl -xb
+sudo journalctl -fu docker.service
+
+https://indanime.org/status/OnGoing
+
+
+\u201c37t589QzE8fWs8o7781D\u201d
+
+
+
+aLGe2i6Ja1QHxccYAaxB
+tf_notify
+
+uff s3 access
+s3bucketuser
+!#dB2jM8iF1jLW6cM4cX6hB1x@!
+id : AKIAVAMI4KXLEBNX45VH
+sec : CuoHT+Eefvmh6yLi/KLsdDiy0MKB/iSnrJg5f4eJ
+
+uffs3bucketuser
+!#dB2jM8iF1jLW6cM4cX6hB1x@!
+id :AKIAVAMI4KXLJO5K5U6E
+sec : akisGdDvR5UHvNrzE/LBr3PjVtRMFWj8PcG05J7B
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::uffaddressbucket/*"
+        }
+    ]
+}
+
+vocus 
+
+-rw-r--r--. 1 root root  59M Aug 25 14:49 keycloak.sql
+-rw-r--r--. 1 root root  82M Aug 25 14:49 tf_artefact.sql
+-rw-r--r--. 1 root root  34M Aug 25 14:49 tf_catalog.sql
+-rw-r--r--. 1 root root  28M Aug 25 14:49 tf_event.sql
+-rw-r--r--. 1 root root  28G Aug 25 14:55 tf_interaction.sql
+-rw-r--r--. 1 root root 3.8M Aug 25 14:55 tf_job.sql
+-rw-r--r--. 1 root root  21G Aug 25 14:58 tf_notify.sql
+-rw-r--r--. 1 root root 7.6M Aug 25 14:58 tf_party.sql
+-rw-r--r--. 1 root root 429K Aug 25 14:58 tf_portal.sql
+-rw-r--r--. 1 root root  31G Aug 25 15:04 tf_process.sql
+-rw-r--r--. 1 root root  15M Aug 25 15:04 tf_qualify.sql
+-rw-r--r--. 1 root root  722 Aug 25 15:04 tf_quartz.sql
+-rw-r--r--. 1 root root  23K Aug 25 15:04 tf_rest.sql
+-rw-r--r--. 1 root root  19K Aug 25 15:04 tf_rest_v2.sql
+-rw-r--r--. 1 root root 109K Aug 25 15:04 tf_system_message.sql
+-rw-r--r--. 1 root root 4.2K Aug 25 15:04 tf_idfactory.sql
+-rw-r--r--. 1 root root 399M Aug 25 15:04 tf_tmf_637.sql
+-rw-r--r--. 1 root root 7.1G Aug 25 15:06 tf_analytics.sql
+-rw-r--r--. 1 root root  30K Aug 25 15:06 tf_uffassure.sql
+
+
+# tantangan
+s3 bucket, api access, and the cron job.
+
+#cron 
+#!/bin/bash
+
+#5 * 27 * * /opt/telflow/s3-cron/auto-load-address.sh
+#10 * 27 * * sh /opt/telflow/s3-cron/auto-load-address1.sh
+#20 * 27 * * bash /opt/telflow/s3-cron/auto-load-address3.sh
+
+systemctl enable
+ls multi-user.target.wants/
