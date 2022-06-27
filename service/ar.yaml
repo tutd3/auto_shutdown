@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: argo-deployment
+  name: argo-deployment-nginx
 spec:
   selector:
     matchLabels:
